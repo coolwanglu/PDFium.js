@@ -7,7 +7,7 @@
 #ifndef FXJSAPI_H
 #define FXJSAPI_H
 
-#include <v8.h>
+//#include <v8.h>
 
 enum FXJSOBJTYPE
 {

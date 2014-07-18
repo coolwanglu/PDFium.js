@@ -11,7 +11,7 @@
 #include "../include/formfiller/FFL_FormFiller.h"
 #include "../include/fsdk_actionhandler.h"
 
-#include "../include/javascript/IJavaScript.h"
+//#include "../include/javascript/IJavaScript.h"
 
 //------------------------------------------------------------------------------------
 //*										CPDFSDK_Widget 
@@ -1929,6 +1929,7 @@ CPDF_Stream* CPDFSDK_InterForm::LoadImageFromFile(const CFX_WideString& sFile)
 
 void CPDFSDK_InterForm::OnCalculate(CPDF_FormField* pFormField)
 {
+    /*
 	ASSERT(m_pDocument != NULL);
 	CPDFDoc_Environment* pEnv = m_pDocument->GetEnv();
 	ASSERT(pEnv);
@@ -1995,10 +1996,12 @@ void CPDFSDK_InterForm::OnCalculate(CPDF_FormField* pFormField)
 	}
 
 	m_bBusy = FALSE;
+    */
 }
 
 CFX_WideString CPDFSDK_InterForm::OnFormat(CPDF_FormField* pFormField, int nCommitKey, FX_BOOL& bFormated)
 {
+    /*
 	ASSERT(m_pDocument != NULL);
 	ASSERT(pFormField != NULL);
 
@@ -2058,6 +2061,7 @@ CFX_WideString CPDFSDK_InterForm::OnFormat(CPDF_FormField* pFormField, int nComm
 	}
 
 	return sValue;
+    */
 }
 
 void CPDFSDK_InterForm::ResetFieldAppearance(CPDF_FormField* pFormField, FX_LPCWSTR sValue, FX_BOOL bValueChanged)

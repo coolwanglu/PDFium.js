@@ -29,7 +29,7 @@ class IFX_SystemHandler;
 class CPDFSDK_ActionHandler;
 class CJS_RuntimeFactory;
 
-#include "javascript/IJavaScript.h"
+//#include "javascript/IJavaScript.h"
 
 class CPDFDoc_Environment FX_FINAL
 {

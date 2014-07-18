@@ -8,7 +8,7 @@
 #include "../include/fsdk_mgr.h"
 #include "../include/fpdf_ext.h"
 #include "../include/formfiller/FFL_FormFiller.h"
-#include "../include/javascript/IJavaScript.h"
+//#include "../include/javascript/IJavaScript.h"
 
 #if _FX_OS_ == _FX_ANDROID_
 #include "time.h"
@@ -212,14 +212,16 @@ FX_SYSTEMTIME CFX_SystemHandler::GetLocalTime()
 }
 
 
+/*
 CJS_RuntimeFactory* GetJSRuntimeFactory()
 {
 	static CJS_RuntimeFactory s_JSRuntimeFactory;
 	return &s_JSRuntimeFactory;
 }
+*/
 
 CPDFDoc_Environment::CPDFDoc_Environment(CPDF_Document * pDoc):m_pInfo(NULL),m_pIFormFiller(NULL),
-								m_pAnnotHandlerMgr(NULL),m_pActionHandler(NULL),m_pJSRuntime(NULL),
+								m_pAnnotHandlerMgr(NULL),m_pActionHandler(NULL),//m_pJSRuntime(NULL),
 								m_pSDKDoc(NULL), m_pPDFDoc(pDoc)
 {
 
@@ -227,9 +229,11 @@ CPDFDoc_Environment::CPDFDoc_Environment(CPDF_Document * pDoc):m_pInfo(NULL),m_p
 	m_pSysHandler = new CFX_SystemHandler(this);
 
 	
+    /*
 	m_pJSRuntimeFactory = NULL;
 	m_pJSRuntimeFactory = GetJSRuntimeFactory();
 	m_pJSRuntimeFactory->AddRef();
+    */
 }
 
 CPDFDoc_Environment::~CPDFDoc_Environment()
@@ -240,9 +244,11 @@ CPDFDoc_Environment::~CPDFDoc_Environment()
 		delete m_pIFormFiller;
 		m_pIFormFiller = NULL;
 	}
+    /*
 	if(m_pJSRuntime && m_pJSRuntimeFactory)
 		m_pJSRuntimeFactory->DeleteJSRuntime(m_pJSRuntime);
 	m_pJSRuntimeFactory->Release();
+    */
 
 	if(m_pSysHandler)
 	{
@@ -265,6 +271,7 @@ CPDFDoc_Environment::~CPDFDoc_Environment()
 }
 
 
+/*
 IFXJS_Runtime* CPDFDoc_Environment::GetJSRuntime()
 {
 	if(!IsJSInitiated())
@@ -274,6 +281,7 @@ IFXJS_Runtime* CPDFDoc_Environment::GetJSRuntime()
 		m_pJSRuntime = m_pJSRuntimeFactory->NewJSRuntime(this);
 	return m_pJSRuntime;
 }
+*/
 
 CPDFSDK_AnnotHandlerMgr* CPDFDoc_Environment::GetAnnotHandlerMgr()
 {
@@ -307,6 +315,7 @@ CFFL_IFormFiller* CPDFDoc_Environment::GetIFormFiller()
 	return m_pIFormFiller;
 }
 
+/*
 FX_BOOL	CPDFDoc_Environment::IsJSInitiated()
 {
 	if(m_pInfo)
@@ -318,6 +327,7 @@ FX_BOOL	CPDFDoc_Environment::IsJSInitiated()
 	}
 	return FALSE;
 }
+*/
 
 CPDFSDK_Document::CPDFSDK_Document(CPDF_Document* pDoc,CPDFDoc_Environment* pEnv):m_pDoc(pDoc),
 						m_pInterForm(NULL),m_pEnv(pEnv),m_pOccontent(NULL),m_bChangeMask(FALSE)
@@ -394,6 +404,7 @@ CPDFSDK_PageView* CPDFSDK_Document::GetPageView(int nIndex)
 	return pTempPageView;
 }
 
+/*
 void CPDFSDK_Document:: ProcJavascriptFun()
 {
 	CPDF_Document* pPDFDoc = this->GetDocument();
@@ -409,6 +420,7 @@ void CPDFSDK_Document:: ProcJavascriptFun()
 	}
 	
 }
+*/
 
 FX_BOOL CPDFSDK_Document::ProcOpenAction()
 {
@@ -582,11 +594,13 @@ FX_BOOL CPDFSDK_Document::GetPermissions(int nFlag)
 	return dwPermissions&nFlag;
 }
 
+/*
 IFXJS_Runtime * CPDFSDK_Document::GetJsRuntime()
 {
 	ASSERT(m_pEnv!=NULL);
 	return m_pEnv->GetJSRuntime();
 }
+*/
 
 CFX_WideString	CPDFSDK_Document::GetPath() 
 {

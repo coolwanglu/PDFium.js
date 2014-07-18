@@ -14,6 +14,9 @@
 #define _FXM_PLATFORM_LINUX_		2
 #define _FXM_PLATFORM_APPLE_		3
 #define _FXM_PLATFORM_ANDROID_		4
+// Lu Wang
+#define _FX_OS_ _FX_LINUX_DESKTOP_
+#define _FXM_PLATFORM_ _FXM_PLATFORM_LINUX_
 #ifndef _FX_OS_
 #if defined(__ANDROID__)
 #define _FX_OS_ _FX_ANDROID_

@@ -10,7 +10,7 @@
 #include "../include/fsdk_mgr.h"
 
 
-#include "../include/javascript/IJavaScript.h"
+//#include "../include/javascript/IJavaScript.h"
 
 
 DLLEXPORT int STDCALL FPDPage_HasFormFieldAtPoint(FPDF_FORMHANDLE hHandle, FPDF_PAGE page,double page_x, double page_y)
@@ -353,6 +353,7 @@ DLLEXPORT void STDCALL FORM_OnBeforeClosePage(FPDF_PAGE page, FPDF_FORMHANDLE hH
 }
 DLLEXPORT void STDCALL FORM_DoDocumentJSAction(FPDF_FORMHANDLE hHandle)
 {
+    /*
 	if(!hHandle)
 		return;
 	if( CPDFSDK_Document* pSDKDoc = ((CPDFDoc_Environment*)hHandle)->GetCurrentDoc())
@@ -361,10 +362,12 @@ DLLEXPORT void STDCALL FORM_DoDocumentJSAction(FPDF_FORMHANDLE hHandle)
 		if(((CPDFDoc_Environment*)hHandle)->IsJSInitiated())
 			pSDKDoc->ProcJavascriptFun();
 	}	
+    */
 }
 
 DLLEXPORT void STDCALL FORM_DoDocumentOpenAction(FPDF_FORMHANDLE hHandle)
 {
+    /*
 	if(!hHandle)
 		return;
 	if( CPDFSDK_Document* pSDKDoc = ((CPDFDoc_Environment*)hHandle)->GetCurrentDoc())
@@ -372,6 +375,7 @@ DLLEXPORT void STDCALL FORM_DoDocumentOpenAction(FPDF_FORMHANDLE hHandle)
 		if(((CPDFDoc_Environment*)hHandle)->IsJSInitiated())
 			pSDKDoc->ProcOpenAction();
 	}
+    */
 }
 DLLEXPORT void STDCALL FORM_DoDocumentAAction(FPDF_FORMHANDLE hHandle, int aaType)
 {

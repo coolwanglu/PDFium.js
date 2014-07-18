@@ -7,7 +7,7 @@
 #include "../include/fsdk_define.h"
 #include "../include/fsdk_mgr.h"
 #include "../include/fsdk_actionhandler.h"
-#include "../include/javascript/IJavaScript.h"
+//#include "../include/javascript/IJavaScript.h"
 
 /* -------------------------- CBA_ActionHandler -------------------------- */
 
@@ -61,12 +61,14 @@ FX_BOOL	CPDFSDK_ActionHandler::DoAction_JavaScript(const CPDF_Action& JsAction,C
 {
 	if (JsAction.GetType() == CPDF_Action::JavaScript)
 	{
+        /*
 		CFX_WideString swJS = JsAction.GetJavaScript();
 		if (!swJS.IsEmpty())
 		{
 			RunDocumentOpenJavaScript(pDocument, csJSName, swJS);
 			return TRUE;
 		}
+        */
 	}
 
 	return FALSE;
@@ -76,6 +78,7 @@ FX_BOOL	CPDFSDK_ActionHandler::DoAction_FieldJavaScript(const CPDF_Action& JsAct
 									CPDFSDK_Document* pDocument, CPDF_FormField* pFormField, 
 									PDFSDK_FieldAction& data)
 {
+    /*
 	CPDFDoc_Environment* pEnv = pDocument->GetEnv();
 	ASSERT(pEnv);
 	if (pEnv->IsJSInitiated() && JsAction.GetType() == CPDF_Action::JavaScript)
@@ -87,6 +90,7 @@ FX_BOOL	CPDFSDK_ActionHandler::DoAction_FieldJavaScript(const CPDF_Action& JsAct
 			return TRUE;
 		}
 	}
+    */
 	return FALSE;
 }
 
@@ -146,6 +150,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteDocumentOpenAction(const CPDF_Action& acti
 	ASSERT(pEnv);
 	if (action.GetType() == CPDF_Action::JavaScript)
 	{
+        /*
 		if(pEnv->IsJSInitiated())
 		{
 			CFX_WideString swJS = action.GetJavaScript();
@@ -154,6 +159,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteDocumentOpenAction(const CPDF_Action& acti
 				RunDocumentOpenJavaScript(pDocument, L"", swJS);
 			}
 		}
+        */
 	}
 	else
 	{
@@ -185,6 +191,7 @@ FX_BOOL CPDFSDK_ActionHandler::ExecuteLinkAction(const CPDF_Action& action,	CPDF
 	ASSERT(pEnv);
 	if (action.GetType() == CPDF_Action::JavaScript)
 	{
+        /*
 		if(pEnv->IsJSInitiated())
 		{
 			CFX_WideString swJS = action.GetJavaScript();
@@ -210,6 +217,7 @@ FX_BOOL CPDFSDK_ActionHandler::ExecuteLinkAction(const CPDF_Action& action,	CPDF
 				pRuntime->ReleaseContext(pContext);
 			}
 		}
+        */
 	}
 	else
 	{
@@ -241,6 +249,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteDocumentPageAction(const CPDF_Action& acti
 	ASSERT(pEnv);
 	if (action.GetType() == CPDF_Action::JavaScript)
 	{
+        /*
 		if(pEnv->IsJSInitiated())
 		{
 			CFX_WideString swJS = action.GetJavaScript();
@@ -249,6 +258,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteDocumentPageAction(const CPDF_Action& acti
 				RunDocumentPageJavaScript(pDocument, type, swJS);
 			}
 		}
+        */
 	}
 	else
 	{
@@ -301,6 +311,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteFieldAction(const CPDF_Action& action, CPD
 	ASSERT(pEnv);
 	if (action.GetType() == CPDF_Action::JavaScript)
 	{
+        /*
 		if(pEnv->IsJSInitiated())
 		{
 			CFX_WideString swJS = action.GetJavaScript();
@@ -311,6 +322,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteFieldAction(const CPDF_Action& action, CPD
 					return FALSE;
 			}
 		}
+        */
 	}
 	else
 	{
@@ -341,6 +353,7 @@ FX_BOOL CPDFSDK_ActionHandler::ExecuteScreenAction(const CPDF_Action& action, CP
 	ASSERT(pEnv);
 	if (action.GetType() == CPDF_Action::JavaScript)
 	{
+        /*
 		if(pEnv->IsJSInitiated())
 		{
 			CFX_WideString swJS = action.GetJavaScript();
@@ -401,6 +414,7 @@ FX_BOOL CPDFSDK_ActionHandler::ExecuteScreenAction(const CPDF_Action& action, CP
 				pRuntime->ReleaseContext(pContext);
 			}
 		}
+        */
 	}
 	else
 	{
@@ -432,6 +446,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteBookMark(const CPDF_Action& action, CPDFSD
 	ASSERT(pEnv);
 	if (action.GetType() == CPDF_Action::JavaScript)
 	{
+        /*
 		if(pEnv->IsJSInitiated())
 		{
 			CFX_WideString swJS = action.GetJavaScript();
@@ -457,6 +472,7 @@ FX_BOOL	CPDFSDK_ActionHandler::ExecuteBookMark(const CPDF_Action& action, CPDFSD
 				pRuntime->ReleaseContext(pContext);
 			}
 		}
+        */
 	}
 	else
 	{
@@ -638,6 +654,7 @@ void CPDFSDK_ActionHandler::DoAction_SetOCGState(CPDFSDK_Document* pDocument,/* 
 void CPDFSDK_ActionHandler::RunFieldJavaScript(CPDFSDK_Document* pDocument, CPDF_FormField* pFormField, CPDF_AAction::AActionType type,
 										PDFSDK_FieldAction& data, const CFX_WideString& script)
 {
+    /*
 	ASSERT(type != CPDF_AAction::Calculate);
 	ASSERT(type != CPDF_AAction::Format);
 
@@ -693,10 +710,12 @@ void CPDFSDK_ActionHandler::RunFieldJavaScript(CPDFSDK_Document* pDocument, CPDF
 	}
 
 	pRuntime->ReleaseContext(pContext);
+    */
 }
 
 void CPDFSDK_ActionHandler::RunDocumentOpenJavaScript(CPDFSDK_Document* pDocument, const CFX_WideString& sScriptName, const CFX_WideString& script)
 {
+    /*
 	ASSERT(pDocument != NULL);
 
 	IFXJS_Runtime* pRuntime = pDocument->GetJsRuntime();
@@ -717,10 +736,12 @@ void CPDFSDK_ActionHandler::RunDocumentOpenJavaScript(CPDFSDK_Document* pDocumen
 	}
 
 	pRuntime->ReleaseContext(pContext);
+    */
 }
 
 void CPDFSDK_ActionHandler::RunDocumentPageJavaScript(CPDFSDK_Document* pDocument, CPDF_AAction::AActionType type, const CFX_WideString& script)
 {
+    /*
 	ASSERT(pDocument != NULL);
 
 	IFXJS_Runtime* pRuntime = pDocument->GetJsRuntime();
@@ -773,6 +794,7 @@ void CPDFSDK_ActionHandler::RunDocumentPageJavaScript(CPDFSDK_Document* pDocumen
 	}
 
 	pRuntime->ReleaseContext(pContext);
+    */
 }
 
 

@@ -114,8 +114,7 @@
             'cflags': [
               '-fdata-sections',
               '-ffunction-sections',
-              '-O3',
-              '-O2',
+              '-Oz',
             ],
           }],
           ['OS=="android"', {

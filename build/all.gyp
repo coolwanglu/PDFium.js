@@ -9,6 +9,7 @@
       'type': 'none',
       'dependencies': [
         '../samples/samples.gyp:*',
+        '../pdfium.js/pdfium.js.gyp:*',
       ],
     }
   ]
