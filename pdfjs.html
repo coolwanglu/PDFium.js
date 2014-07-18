@@ -1,0 +1,89 @@
+<!doctype html>
+<!--  vim: set sw=2 ts=2 et : --> 
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title></title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="pdfium.css">
+    <script src="http://mozilla.github.io/pdf.js/build/pdf.js"></script>
+  </head>
+  <body>
+    <div id="header" class="container">
+      <div class="jumbotron">
+        <h3>PDF.js profiling</h3>
+        <h6>by <a target="_blank" href="http://coolwanglu.github.io/">Lu Wang</a> 2014</h6>
+      </div>
+      <input id="input-pdf" type="file" class="small">
+    </div>
+    <div id="main" class="container">
+      <div id="render" class="container">
+      </div>
+    </div>
+    <script>
+      var canvas_list = [];
+      var scale = window.devicePixelRatio;
+      var timer = null;
+      PDFJS.disableWorker = true;
+      PDFJS.disableTextLayer = true;
+      var inputE = document.getElementById('input-pdf');
+      inputE.style.display = 'block';
+      inputE.addEventListener('change', function(e) {
+        var files = e.target.files;
+        if(files.length == 0)
+          return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          PDFJS.getDocument({data: new Uint8Array(e.target.result)}, 0).then(function(doc) {
+            var page_count = doc.numPages;
+
+            canvas_list.length = 0;
+            var renderE = document.getElementById('render');
+            renderE.innerHTML='';
+            for(var i = 0; i < page_count; ++i) {
+              var e = document.createElement('canvas');
+              canvas_list.push(e);
+              renderE.appendChild(e);
+            }
+
+            var cur_page = 0;
+            function render_next_page() {
+              if(cur_page == page_count) return;
+
+              var start_time = Date.now();
+              doc.getPage(cur_page+1).then(function(page) {
+                var render_start_time = Date.now();
+
+                var canvas = canvas_list[cur_page];
+                if(!canvas)
+                  return;
+                var viewport = page.getViewport(2);
+
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                canvas.style.width = viewport.width / scale + 'px';
+                canvas.style.height = viewport.height / scale + 'px';
+
+                page.render({canvasContext: canvas.getContext('2d'), viewport: viewport}).promise.then(function() {
+                  var end_time = Date.now();
+                  console.log('Page', cur_page+1);
+                  console.log('Page Request', render_start_time - start_time, 'ms');
+                  console.log('Rendering', end_time - render_start_time, 'ms');
+                  console.log('Overall', end_time - start_time, 'ms');
+
+                  ++cur_page;
+                  timer = setTimeout(render_next_page, 1);
+                });
+              });
+            }
+            clearTimeout(timer);
+            timer = setTimeout(render_next_page, 1);
+          });
+        };
+        reader.readAsArrayBuffer(files[0]);
+      });
+    </script>
+  </body>
+</html>

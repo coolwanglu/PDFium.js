@@ -1,0 +1,142 @@
+<!doctype html>
+<!--  vim: set sw=2 ts=2 et : --> 
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title></title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="pdfium.css">
+  </head>
+  <body>
+    <div id="header" class="container">
+    <a href="https://github.com/coolwanglu/PDFium.js"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+      <div class="jumbotron">
+        <h3>PDFium.js</h3>
+        <h6>by <a target="_blank" href="http://coolwanglu.github.io/">Lu Wang</a> 2014</h6>
+      </div>
+      <input id="input-pdf" type="file" class="small">
+      <p id="loading-msg">Loading...</p>
+      <p id="memory-msg"></p>
+    </div>
+    <div id="main" class="container">
+      <div id="render" class="container">
+      </div>
+    </div>
+    <script>
+      var canvas_list = [];
+      var scale = window.devicePixelRatio;
+      var timer = null;
+      var hashParams = (function() {
+        var search = document.location.search.substring(1);
+        var parts = search.split('&');
+        var params = {};
+        for(var i = 0, l = parts.length; i < l; ++i) {
+          var param = parts[i].split('=');
+          var key = param[0];
+          var value = param.length > 1 ? param[1] : null;
+          params[decodeURIComponent(key)] = decodeURIComponent(value);
+        }
+        return params;
+      })();
+      var total_memory = ('total_memory' in hashParams) ? parseInt(hashParams['total_memory']) : 1024*1024*100;
+      var Module = {
+        TOTAL_MEMORY: total_memory,
+        noExitRuntime: true,
+        print: function() { 
+            console.group.apply(console, arguments); 
+            console.groupEnd();
+        },
+        printErr: function() { 
+            console.group.apply(console, arguments); 
+            console.groupEnd();
+        },
+        _main: function () {
+          var loading_msg = document.getElementById('loading-msg');
+          loading_msg.parentNode.removeChild(loading_msg);
+          enlargeMemory = function() {
+            document.getElementById('memory-msg').innerHTML = 'Input file is too large, try to allocate more memory like <a href="?total_memory=' + total_memory * 2 +'">this</a>.';
+            abort();
+          };
+          Module['cwrap']('PDFiumJS_init', null, [])();
+          Module['cwrap']('set_scale', null, ['number'])(scale);
+          var inputE = document.getElementById('input-pdf');
+          inputE.style.display = 'block';
+          inputE.addEventListener('change', function(e) {
+            var files = e.target.files;
+            if(files.length == 0)
+              return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+              var buf = new Uint8Array(e.target.result); 
+              var ptr = Module['cwrap']('get_content_buffer', 'number', ['number'])(buf.length);
+              for(var i = 0, l = buf.length; i < l; ++i) {
+                HEAP8[ptr+i] = buf[i];
+              }
+              Module['cwrap']('load', null, [])();
+              var page_count = Module['cwrap']('get_page_count', 'number', [])();
+              canvas_list.length = 0;
+              var renderE = document.getElementById('render');
+              renderE.innerHTML='';
+              for(var i = 0; i < page_count; ++i) {
+                var e = document.createElement('canvas');
+                canvas_list.push(e);
+                renderE.appendChild(e);
+              }
+
+              var cur_page = 0;
+              function render_next_page() {
+                if(cur_page == page_count) return;
+
+                try {
+                  var start_time = Date.now();
+                  Module['cwrap']('render_page', null, ['number'])(cur_page);
+                  var end_time = Date.now();
+                  console.log('Page', cur_page+1, end_time - start_time, 'ms');
+                } catch(e) {
+                  console.log('Cannot render page', cur_page, e);
+                }
+                ++cur_page;
+                timer = setTimeout(render_next_page, 1);
+              }
+              clearTimeout(timer);
+              timer = setTimeout(render_next_page, 1);
+            };
+            reader.readAsArrayBuffer(files[0]);
+          });
+        },
+        render: function(page_no, buf, stride, width, height) {
+          if(stride <= 0 || width <= 0 || height <= 0)
+            return;
+          var canvas = canvas_list[page_no];
+          if(!canvas)
+            return;
+          canvas.width = width;
+          canvas.height = height;
+          canvas.style.width = width / scale + 'px';
+          canvas.style.height = height / scale + 'px';
+
+          var ctx = canvas.getContext('2d');
+          var img = ctx.createImageData(width, height);
+          var data = img.data;
+
+          var off = 0;
+          for(var h = 0; h < height; ++h) {
+            var ptr = buf + stride * h;
+            for(var w = 0; w < width; ++w) {
+              data[off++] = HEAP8[(ptr+2)]&255;
+              data[off++] = HEAP8[(ptr+1)]&255;
+              data[off++] = HEAP8[(ptr)]&255;
+              data[off++] = 255;
+              ptr += 4;
+            }
+          }
+
+          ctx.putImageData(img, 0, 0);
+        },
+      };
+    </script>
+    <script src="pdfium.js"></script>
+  </body>
+</html>
