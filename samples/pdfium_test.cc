@@ -16,7 +16,7 @@
 #include "../fpdfsdk/include/fpdfformfill.h"
 #include "../fpdfsdk/include/fpdftext.h"
 #include "../fpdfsdk/include/fpdfview.h"
-#include "v8/include/v8.h"
+//#include "v8/include/v8.h"
 
 #ifdef _WIN32
   #define snprintf _snprintf
@@ -351,7 +351,7 @@ void RenderPdf(const char* name, const char* pBuf, size_t len,
 }
 
 int main(int argc, const char* argv[]) {
-  v8::V8::InitializeICU();
+  //v8::V8::InitializeICU();
   OutputFormat format = OUTPUT_NONE;
   std::list<const char*> files;
   if (!ParseCommandLine(argc, argv, &format, &files)) {

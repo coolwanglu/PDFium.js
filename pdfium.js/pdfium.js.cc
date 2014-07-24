@@ -17,124 +17,125 @@
 #include "../fpdfsdk/include/fpdftext.h"
 #include "../fpdfsdk/include/fpdfview.h"
 
-char * content_buffer = 0;
-size_t content_buffer_len = 0;
-size_t content_buffer_actual_len = 0;
-bool loaded = false;
+struct {
+    UNSUPPORT_INFO unsuppored_info;
+} global;
 
-UNSUPPORT_INFO unsuppored_info;
-FPDF_DOCUMENT doc;
-FPDF_AVAIL pdf_avail;
-FPDF_FORMHANDLE form;
-IPDF_JSPLATFORM platform_callbacks;
-FPDF_FORMFILLINFO form_callbacks;
-FPDF_FILEACCESS file_access;
-FX_FILEAVAIL file_avail;
-FX_DOWNLOADHINTS hints;
-TestLoader *loader;
+struct PDFiumJS_Doc {
+    PDFiumJS_Doc(const char *buf, size_t len) 
+        : loader(buf, len) {
+        memset(&platform_callbacks, '\0', sizeof(platform_callbacks));
+        platform_callbacks.version = 1;
+        platform_callbacks.app_alert = Form_Alert;
 
-int page_count = 0;
-int scale = 1;
+        memset(&form_callbacks, '\0', sizeof(form_callbacks));
+        form_callbacks.version = 1;
+        form_callbacks.m_pJsPlatform = &platform_callbacks;
 
-extern "C"
-void PDFiumJS_init() {
-    FPDF_InitLibrary(NULL);
+        memset(&file_access, '\0', sizeof(file_access));
+        file_access.m_FileLen = static_cast<unsigned long>(len);
+        file_access.m_GetBlock = Get_Block;
+        file_access.m_Param = &loader;
 
-    memset(&unsuppored_info, '\0', sizeof(unsuppored_info));
-    unsuppored_info.version = 1;
-    unsuppored_info.FSDK_UnSupport_Handler = Unsupported_Handler;
+        memset(&file_avail, '\0', sizeof(file_avail));
+        file_avail.version = 1;
+        file_avail.IsDataAvail = Is_Data_Avail;
 
-    FSDK_SetUnSpObjProcessHandler(&unsuppored_info);
-}
+        memset(&hints, '\0', sizeof(hints));
+        hints.version = 1;
+        hints.AddSegment = Add_Segment;
 
-extern "C"
-void load() {
-    if(loaded) {
-      delete loader;
-      FORM_DoDocumentAAction(form, FPDFDOC_AACTION_WC);
-      FPDFDOC_ExitFormFillEnviroument(form);
-      FPDF_CloseDocument(doc);
-      FPDFAvail_Destroy(pdf_avail);
-    }
-    loaded = true;
+        pdf_avail = FPDFAvail_Create(&file_avail, &file_access);
 
-    const char* pBuf = content_buffer;
-    size_t len = content_buffer_actual_len;
+        (void) FPDFAvail_IsDocAvail(pdf_avail, &hints);
 
-    memset(&platform_callbacks, '\0', sizeof(platform_callbacks));
-    platform_callbacks.version = 1;
-    platform_callbacks.app_alert = Form_Alert;
+        if (!FPDFAvail_IsLinearized(pdf_avail)) {
+            doc = FPDF_LoadCustomDocument(&file_access, NULL);
+        } else {
+            doc = FPDFAvail_GetDocument(pdf_avail, NULL);
+        }
 
-    memset(&form_callbacks, '\0', sizeof(form_callbacks));
-    form_callbacks.version = 1;
-    form_callbacks.m_pJsPlatform = &platform_callbacks;
+        (void) FPDF_GetDocPermissions(doc);
+        (void) FPDFAvail_IsFormAvail(pdf_avail, &hints);
 
-    loader = new TestLoader(pBuf, len);
+        form = FPDFDOC_InitFormFillEnviroument(doc, &form_callbacks);
+        FPDF_SetFormFieldHighlightColor(form, 0, 0xFFE4DD);
+        FPDF_SetFormFieldHighlightAlpha(form, 100);
 
-    memset(&file_access, '\0', sizeof(file_access));
-    file_access.m_FileLen = static_cast<unsigned long>(len);
-    file_access.m_GetBlock = Get_Block;
-    file_access.m_Param = loader;
+        /*
+        int first_page = FPDFAvail_GetFirstPageNum(doc);
+        (void) FPDFAvail_IsPageAvail(pdf_avail, first_page, &hints);
+        */
 
-    memset(&file_avail, '\0', sizeof(file_avail));
-    file_avail.version = 1;
-    file_avail.IsDataAvail = Is_Data_Avail;
+        page_count = FPDF_GetPageCount(doc);
+        printf("%d\n", page_count);
+        for (int i = 0; i < page_count; ++i) {
+            (void) FPDFAvail_IsPageAvail(pdf_avail, i, &hints);
+        }
 
-    memset(&hints, '\0', sizeof(hints));
-    hints.version = 1;
-    hints.AddSegment = Add_Segment;
-
-    pdf_avail = FPDFAvail_Create(&file_avail, &file_access);
-
-    (void) FPDFAvail_IsDocAvail(pdf_avail, &hints);
-
-    if (!FPDFAvail_IsLinearized(pdf_avail)) {
-        doc = FPDF_LoadCustomDocument(&file_access, NULL);
-    } else {
-        doc = FPDFAvail_GetDocument(pdf_avail, NULL);
+        FORM_DoDocumentJSAction(form);
+        FORM_DoDocumentOpenAction(form);
     }
 
-    (void) FPDF_GetDocPermissions(doc);
-    (void) FPDFAvail_IsFormAvail(pdf_avail, &hints);
-
-    form = FPDFDOC_InitFormFillEnviroument(doc, &form_callbacks);
-    FPDF_SetFormFieldHighlightColor(form, 0, 0xFFE4DD);
-    FPDF_SetFormFieldHighlightAlpha(form, 100);
-
-    int first_page = FPDFAvail_GetFirstPageNum(doc);
-    (void) FPDFAvail_IsPageAvail(pdf_avail, first_page, &hints);
-
-    page_count = FPDF_GetPageCount(doc);
-    for (int i = 0; i < page_count; ++i) {
-        (void) FPDFAvail_IsPageAvail(pdf_avail, i, &hints);
+    ~PDFiumJS_Doc() {
+        FORM_DoDocumentAAction(form, FPDFDOC_AACTION_WC);
+        FPDFDOC_ExitFormFillEnviroument(form);
+        FPDF_CloseDocument(doc);
+        FPDFAvail_Destroy(pdf_avail);
     }
 
-    FORM_DoDocumentJSAction(form);
-    FORM_DoDocumentOpenAction(form);
-}
+    static
+    int Form_Alert(IPDF_JSPLATFORM*, FPDF_WIDESTRING, FPDF_WIDESTRING, int, int) {
+      printf("Form_Alert called.\n");
+      return 0;
+    }
 
+    static
+    int Get_Block(void *param, unsigned long pos, unsigned char *pBuf, unsigned long size) {
+      TestLoader *pLoader = (TestLoader*) param;
+      if (pos + size < pos || pos + size > pLoader->m_Len) return 0;
+      memcpy(pBuf, pLoader->m_pBuf + pos, size);
+      return 1;
+    }
 
-extern "C"
-char * get_content_buffer(size_t len) {
-    if(content_buffer_len < len) {
-        free(content_buffer);
-        content_buffer = (char*)malloc(len);
-        content_buffer_len = len;
-    }    
-    content_buffer_actual_len = len;
-    return content_buffer;
-}
+    static
+    bool Is_Data_Avail(FX_FILEAVAIL *pThis, size_t offset, size_t size) {
+      return true;
+    }
 
-extern "C"
-void render_to_canvas(int page_no, const char* buffer, int stride, int width, int height);
+    static
+    void Add_Segment(FX_DOWNLOADHINTS *pThis, size_t offset, size_t size) {
+    }
 
-int Form_Alert(IPDF_JSPLATFORM*, FPDF_WIDESTRING, FPDF_WIDESTRING, int, int) {
-  printf("Form_Alert called.\n");
-  return 0;
-}
+    class TestLoader {
+    public:
+        TestLoader(const char *pBuf, size_t len)
+            : m_pBuf(pBuf), m_Len(len) { }
+        const char *m_pBuf;
+        size_t m_Len;
+    } loader;
+    IPDF_JSPLATFORM platform_callbacks;
+    FPDF_FORMFILLINFO form_callbacks;
+    FPDF_FILEACCESS file_access;
+    FX_FILEAVAIL file_avail;
+    FX_DOWNLOADHINTS hints;
+    FPDF_AVAIL pdf_avail;
+    FPDF_DOCUMENT doc;
+    FPDF_FORMHANDLE form;
+    int page_count;
+};
 
+struct PDFiumJS_Page {
+    PDFiumJS_Page(FPDF_PAGE page, PDFiumJS_Doc *doc) 
+        : page(page), doc(doc) 
+    { }
+    FPDF_PAGE page;
+    PDFiumJS_Doc *doc;
+};
+
+static
 void Unsupported_Handler(UNSUPPORT_INFO*, int type) {
-  const char * feature = "Unknown";
+  const char *feature = "Unknown";
   switch (type) {
     case FPDF_UNSP_DOC_XFAFORM:
       feature = "XFA";
@@ -177,69 +178,82 @@ void Unsupported_Handler(UNSUPPORT_INFO*, int type) {
   printf("Unsupported feature: %s.\n", feature);
 }
 
-class TestLoader {
- public:
-  TestLoader(const char* pBuf, size_t len);
-
-  const char* m_pBuf;
-  size_t m_Len;
-};
-
-TestLoader::TestLoader(const char* pBuf, size_t len)
-    : m_pBuf(pBuf), m_Len(len) {
-}
-
-int Get_Block(void* param, unsigned long pos, unsigned char* pBuf,
-              unsigned long size) {
-  TestLoader* pLoader = (TestLoader*) param;
-  if (pos + size < pos || pos + size > pLoader->m_Len) return 0;
-  memcpy(pBuf, pLoader->m_pBuf + pos, size);
-  return 1;
-}
-
-bool Is_Data_Avail(FX_FILEAVAIL* pThis, size_t offset, size_t size) {
-  return true;
-}
-
-void Add_Segment(FX_DOWNLOADHINTS* pThis, size_t offset, size_t size) {
-}
-
-
 extern "C"
-int get_page_count() {
-    return page_count;
+void PDFiumJS_init() {
+    FPDF_InitLibrary(NULL);
+
+    UNSUPPORT_INFO& unsuppored_info = global.unsuppored_info;
+    memset(&unsuppored_info, '\0', sizeof(unsuppored_info));
+    unsuppored_info.version = 1;
+    unsuppored_info.FSDK_UnSupport_Handler = Unsupported_Handler;
+    FSDK_SetUnSpObjProcessHandler(&unsuppored_info);
 }
 
 extern "C"
-void set_scale(int s) {
-    scale = s;
+PDFiumJS_Doc *PDFiumJS_Doc_new(const char *buf, size_t len) {
+    return new PDFiumJS_Doc(buf, len);
 }
 
+extern "C"
+void PDFiumJS_Doc_delete(PDFiumJS_Doc *doc) {
+    delete doc;
+}
 
 extern "C"
-void render_page(int i) {
-    FPDF_PAGE page = FPDF_LoadPage(doc, i);
-    FPDF_TEXTPAGE text_page = FPDFText_LoadPage(page);
-    FORM_OnAfterLoadPage(page, form);
-    FORM_DoPageAAction(page, form, FPDFPAGE_AACTION_OPEN);
+int PDFiumJS_Doc_get_page_count(PDFiumJS_Doc *doc) {
+    return doc->page_count;
+}
 
-    int width = static_cast<int>(FPDF_GetPageWidth(page)) * scale;
-    int height = static_cast<int>(FPDF_GetPageHeight(page)) * scale;
+extern "C"
+PDFiumJS_Page *PDFiumJS_Doc_get_page(PDFiumJS_Doc *doc, int page_no) {
+    FPDF_PAGE page = FPDF_LoadPage(doc->doc, page_no);
+    FORM_OnAfterLoadPage(page, doc->form);
+    FORM_DoPageAAction(page, doc->form, FPDFPAGE_AACTION_OPEN);
+    return new PDFiumJS_Page(page, doc);
+}
+
+extern "C"
+int PDFiumJS_Page_get_width(PDFiumJS_Page *page) {
+    return static_cast<int>(FPDF_GetPageWidth(page->page));
+}
+
+extern "C"
+int PDFiumJS_Page_get_height(PDFiumJS_Page *page) {
+    return static_cast<int>(FPDF_GetPageHeight(page->page));
+}
+
+extern "C"
+FPDF_BITMAP PDFiumJS_Page_get_bitmap(PDFiumJS_Page *page, int width, int height) {
     FPDF_BITMAP bitmap = FPDFBitmap_Create(width, height, 0);
     FPDFBitmap_FillRect(bitmap, 0, 0, width, height, 0xFFFFFFFF);
 
-    FPDF_RenderPageBitmap(bitmap, page, 0, 0, width, height, 0, 0);
-    FPDF_FFLDraw(form, bitmap, page, 0, 0, width, height, 0, 0);
+    FPDF_RenderPageBitmap(bitmap, page->page, 0, 0, width, height, 0, 0);
+    FPDF_FFLDraw(page->doc->form, bitmap, page->page, 0, 0, width, height, 0, 0);
 
-    const char* buffer = reinterpret_cast<const char*>(FPDFBitmap_GetBuffer(bitmap));
-    int stride = FPDFBitmap_GetStride(bitmap);
-    render_to_canvas(i, buffer, stride, width, height);
+    return bitmap;
+}
 
+extern "C"
+const char *PDFiumJS_Bitmap_get_buffer(FPDF_BITMAP bitmap) {
+    return reinterpret_cast<const char*>(FPDFBitmap_GetBuffer(bitmap));
+}
+
+extern "C"
+int PDFiumJS_Bitmap_get_stride(FPDF_BITMAP bitmap) {
+    return FPDFBitmap_GetStride(bitmap);
+}
+
+extern "C"
+void PDFiumJS_Bitmap_destroy(FPDF_BITMAP bitmap) {
     FPDFBitmap_Destroy(bitmap);
+}
 
-    FORM_DoPageAAction(page, form, FPDFPAGE_AACTION_CLOSE);
-    FORM_OnBeforeClosePage(page, form);
-    FPDFText_ClosePage(text_page);
-    FPDF_ClosePage(page);
+extern "C"
+void PDFiumJS_Page_destroy(PDFiumJS_Page *page) {
+    FORM_DoPageAAction(page->page, page->doc->form, FPDFPAGE_AACTION_CLOSE);
+    FORM_OnBeforeClosePage(page->page, page->doc->form);
+    //FPDFText_ClosePage(text_page);
+    FPDF_ClosePage(page->page);
+    delete page;
 }
 

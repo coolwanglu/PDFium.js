@@ -25,9 +25,6 @@
       </div>
     </div>
     <script>
-      var canvas_list = [];
-      var scale = window.devicePixelRatio;
-      var timer = null;
       var hashParams = (function() {
         var search = document.location.search.substring(1);
         var parts = search.split('&');
@@ -53,14 +50,55 @@
             console.groupEnd();
         },
         _main: function () {
+          var canvas_list = [];
+          var devicePixelRatio = window.devicePixelRatio;
+          var timer = null;
+
           var loading_msg = document.getElementById('loading-msg');
           loading_msg.parentNode.removeChild(loading_msg);
           enlargeMemory = function() {
             document.getElementById('memory-msg').innerHTML = 'Input file is too large, try to allocate more memory like <a href="?total_memory=' + total_memory * 2 +'">this</a>.';
             abort();
           };
-          Module['cwrap']('PDFiumJS_init', null, [])();
-          Module['cwrap']('set_scale', null, ['number'])(scale);
+
+          var get_buf = (function() {
+            var buf = 0;
+            var buf_max_len = 0;
+            var buf_len = 0;
+            return function (len) {
+              if(buf_max_len < len) {
+                _free(buf);
+                buf = _malloc(len);
+                buf_max_len = len;
+              }
+              buf_len = len;
+              return buf;
+            };
+          })();
+
+if (typeof PDFiumJS === 'undefined') {
+  (typeof window !== 'undefined' ? window : this).PDFiumJS = {};
+}
+
+var crawp = Module['crap'];
+PDFiumJS.C = {
+  init: cwrap('PDFiumJS_init', null, []),
+  Doc_new: cwrap('PDFiumJS_Doc_new', 'number', ['number', 'number']),
+  Doc_delete: cwrap('PDFiumJS_Doc_delete', null, ['number']),
+  Doc_get_page_count: cwrap('PDFiumJS_Doc_get_page_count', 'number', ['number']),
+  Doc_get_page: cwrap('PDFiumJS_Doc_get_page', 'number', ['number', 'number']),
+  Page_get_width: cwrap('PDFiumJS_Page_get_width', 'number', ['number']),
+  Page_get_height: cwrap('PDFiumJS_Page_get_height', 'number', ['number']),
+  Page_get_bitmap: cwrap('PDFiumJS_Page_get_bitmap', 'number', ['number']),
+  Bitmap_get_buffer: cwrap('PDFiumJS_Bitmap_get_buffer', 'number', ['number']),
+  Bitmap_get_stride: cwrap('PDFiumJS_Bitmap_get_stride', 'number', ['number']),
+  Bitmap_destroy: cwrap('PDFiumJS_Bitmap_destroy', null, ['number']),
+  Page_destroy: cwrap('PDFiumJS_Page_destroy', null, ['number']),
+};
+          PDFiumJS.C.init();
+
+          var cur_doc = 0;
+
           var inputE = document.getElementById('input-pdf');
           inputE.style.display = 'block';
           inputE.addEventListener('change', function(e) {
@@ -70,12 +108,14 @@
             var reader = new FileReader();
             reader.onload = function(e) {
               var buf = new Uint8Array(e.target.result); 
-              var ptr = Module['cwrap']('get_content_buffer', 'number', ['number'])(buf.length);
+              var ptr = get_buf(buf.length);
               for(var i = 0, l = buf.length; i < l; ++i) {
                 HEAP8[ptr+i] = buf[i];
               }
-              Module['cwrap']('load', null, [])();
-              var page_count = Module['cwrap']('get_page_count', 'number', [])();
+              if(cur_doc)
+                PDFiumJS.C.Doc_delete(cur_doc);
+              cur_doc = PDFiumJS.C.Doc_new(ptr, buf.length);
+              var page_count = PDFiumJS.C.Doc_get_page_count(cur_doc);
               canvas_list.length = 0;
               var renderE = document.getElementById('render');
               renderE.innerHTML='';
@@ -88,10 +128,48 @@
               var cur_page = 0;
               function render_next_page() {
                 if(cur_page == page_count) return;
-
                 try {
                   var start_time = Date.now();
-                  Module['cwrap']('render_page', null, ['number'])(cur_page);
+
+                  var canvas = canvas_list[cur_page];
+                  var page = PDFiumJS.C.Doc_get_page(cur_doc, cur_page);
+                  var width = PDFiumJS.C.Page_get_width(page);
+                  var height = PDFiumJS.C.Page_get_height(page);
+                  canvas.style.width = width + 'px';
+                  canvas.style.height = height + 'px';
+
+                  width *= devicePixelRatio;
+                  height *= devicePixelRatio;
+
+                  canvas.width = width;
+                  canvas.height = height;
+                    
+                  var bitmap = PDFiumJS.C.Page_get_bitmap(page, width, height);
+                  PDFiumJS.C.Page_destroy(page);
+
+                  var buf = PDFiumJS.C.Bitmap_get_buffer(bitmap);
+                  var stride = PDFiumJS.C.Bitmap_get_stride(bitmap);
+                  
+                  var ctx = canvas.getContext('2d');
+                  var img = ctx.createImageData(width, height);
+                  var data = img.data;
+
+                  var off = 0;
+                  for(var h = 0; h < height; ++h) {
+                    var ptr = buf + stride * h;
+                    for(var w = 0; w < width; ++w) {
+                      data[off++] = HEAP8[ptr+2]&255;
+                      data[off++] = HEAP8[ptr+1]&255;
+                      data[off++] = HEAP8[ptr]&255;
+                      data[off++] = 255;
+                      ptr += 4;
+                    }
+                  }
+
+                  PDFiumJS.C.Bitmap_destroy(bitmap);
+                  ctx.putImageData(img, 0, 0);
+
+
                   var end_time = Date.now();
                   console.log('Page', cur_page+1, end_time - start_time, 'ms');
                 } catch(e) {
@@ -105,36 +183,7 @@
             };
             reader.readAsArrayBuffer(files[0]);
           });
-        },
-        render: function(page_no, buf, stride, width, height) {
-          if(stride <= 0 || width <= 0 || height <= 0)
-            return;
-          var canvas = canvas_list[page_no];
-          if(!canvas)
-            return;
-          canvas.width = width;
-          canvas.height = height;
-          canvas.style.width = width / scale + 'px';
-          canvas.style.height = height / scale + 'px';
-
-          var ctx = canvas.getContext('2d');
-          var img = ctx.createImageData(width, height);
-          var data = img.data;
-
-          var off = 0;
-          for(var h = 0; h < height; ++h) {
-            var ptr = buf + stride * h;
-            for(var w = 0; w < width; ++w) {
-              data[off++] = HEAP8[(ptr+2)]&255;
-              data[off++] = HEAP8[(ptr+1)]&255;
-              data[off++] = HEAP8[(ptr)]&255;
-              data[off++] = 255;
-              ptr += 4;
-            }
-          }
-
-          ctx.putImageData(img, 0, 0);
-        },
+        }
       };
     </script>
     <script src="pdfium.js"></script>

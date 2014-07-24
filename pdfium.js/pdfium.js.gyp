@@ -12,7 +12,7 @@
   },
   'targets': [
     {
-      'target_name': 'pdfium.js',
+      'target_name': 'pdfium_js',
       'sources': [
         'pdfium.js.cc',
       ],
