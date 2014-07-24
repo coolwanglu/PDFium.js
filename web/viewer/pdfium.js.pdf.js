@@ -80,7 +80,6 @@ PDFiumJS.Doc.prototype = {
 };
 
 PDFiumJS.Page = function (page_no, doc) {
-  console.log(page_no, 'new');
   this.page_no = page_no;
   this.doc = doc;
   var page = this.page = PDFiumJS.C.Doc_get_page(this.doc, page_no);
@@ -142,7 +141,6 @@ PDFiumJS.Page.prototype = {
     };
   },
   cleanup: function() { 
-    console.log(this.paage_no, 'cleanup');
   },
   destroy: function() {
   },
