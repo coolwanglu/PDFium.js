@@ -3770,7 +3770,6 @@ var PDFView = {
       }
       if (dest) {
         var currentPage = this.pages[(pageNumber || this.page) - 1];
-        console.log(pageNumber, this.page, this.pages.length);
         currentPage.scrollIntoView(dest);
       } else if (pageNumber) {
         this.page = pageNumber; // simple page

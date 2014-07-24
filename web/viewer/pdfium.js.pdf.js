@@ -39,9 +39,21 @@ PDFiumJS.createFakePromise = function() {
     } 
   }; 
 };
+PDFiumJS.createFakeFailedPromise = function() { 
+  var args = arguments;
+  return { 
+    then: function(unused, f){ 
+      if(f) {
+        setTimeout(function() {
+          f.apply(null, args);
+        }, 1);
+      }
+    } 
+  }; 
+};
 
 PDFiumJS.Doc = function (data) {
-  this.data = data;
+  this.file_size = data.length;
   if(!data) {
     this.numPages = 0;
     return;
@@ -60,7 +72,7 @@ PDFiumJS.Doc.prototype = {
     PDFiumJS.C.Doc_delete(this.doc);
   },
   getDownloadInfo: function() {
-    return PDFiumJS.createFakePromise();
+    return PDFiumJS.createFakePromise({ length: this.file_size });
   },
   getPage: function(page_no) {
     return PDFiumJS.createFakePromise( new PDFiumJS.Page(page_no-1, this.doc));
@@ -77,6 +89,7 @@ PDFiumJS.Doc.prototype = {
   getOutline: function() { return PDFiumJS.createFakePromise(); },
   getJavaScript: function() { return PDFiumJS.createFakePromise([]); },
   getAttachments: function() { return PDFiumJS.createFakePromise(); },
+  cleanup: function() { },
 };
 
 PDFiumJS.Page = function (page_no, doc) {
@@ -97,7 +110,10 @@ PDFiumJS.Page.prototype = {
   getAnnotations: function() {
     return PDFiumJS.createFakePromise([]);
   },
-  render: function(params) {
+  getTextContent: function() {
+    return PDFiumJS.createFakePromise({ items: [] });
+  },
+  render: function(params) {//{{{
     try {
       var ctx = params.canvasContext;
       var width = ctx.canvas.width;
@@ -133,13 +149,16 @@ PDFiumJS.Page.prototype = {
 
       ctx.putImageData(img, 0, 0);
     } catch(e) {
+      return {
+        promise: PDFiumJS.createFakeFailedPromise('Could not render the page'),
+      };
     }
 
     return { 
       promise: PDFiumJS.createFakePromise(),
       cancel: function() { },
     };
-  },
+  },//}}}
   cleanup: function() { 
   },
   destroy: function() {
@@ -162,13 +181,7 @@ PDFJS.getDocument = function (data) {
   if(data)
     return PDFiumJS.createFakePromise(new PDFiumJS.Doc(data));
   else
-    return {
-      then: function(unused, f) {
-        if(f) {
-          setTimeout(f, 1, 'Only load files are supported');
-        }
-      },
-    };
+    return PDFiumJS.createFakeFailedPromise('Only local files are supported');
 };
 
 // The following is taken from PDF.js
