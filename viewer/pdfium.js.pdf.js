@@ -95,13 +95,13 @@ PDFiumJS.Doc.prototype = {
 PDFiumJS.Page = function (page_no, doc) {
   this.page_no = page_no;
   this.doc = doc;
-  var page = this.page = PDFiumJS.C.Doc_get_page(this.doc, page_no);
-  this.width = PDFiumJS.C.Page_get_width(this.page);
-  this.height = PDFiumJS.C.Page_get_height(this.page);
+
+  var page = PDFiumJS.C.Doc_get_page(this.doc, page_no);
+  this.width = PDFiumJS.C.Page_get_width(page);
+  this.height = PDFiumJS.C.Page_get_height(page);
   this.ref = { num:0, gen:0 };
   // TODO better memory management
-  PDFiumJS.C.Page_destroy(this.page);
-  this.page = 0;
+  PDFiumJS.C.Page_destroy(page);
 };
 PDFiumJS.Page.prototype = {
   getViewport: function(scale, rotate) {
@@ -123,12 +123,11 @@ PDFiumJS.Page.prototype = {
       var data = img.data;
 
       // TODO better memory management
-      this.page = PDFiumJS.C.Doc_get_page(this.doc, this.page_no);
+      var page = PDFiumJS.C.Doc_get_page(this.doc, this.page_no);
 
-      var bitmap = PDFiumJS.C.Page_get_bitmap(this.page, width, height);
+      var bitmap = PDFiumJS.C.Page_get_bitmap(page, width, height);
 
-      PDFiumJS.C.Page_destroy(this.page);
-      this.page = 0;
+      PDFiumJS.C.Page_destroy(page);
 
       var buf = PDFiumJS.C.Bitmap_get_buffer(bitmap);
       var stride = PDFiumJS.C.Bitmap_get_stride(bitmap);
