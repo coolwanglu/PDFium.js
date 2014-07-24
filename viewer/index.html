@@ -436,53 +436,6 @@ limitations under the License.
               webViewerLoad();
             });
           });
-          /*
-          Module['cwrap']('set_scale', null, ['number'])(scale);
-          var inputE = document.getElementById('input-pdf');
-          inputE.style.display = 'block';
-          inputE.addEventListener('change', function(e) {
-            var files = e.target.files;
-            if(files.length == 0)
-              return;
-            var reader = new FileReader();
-            reader.onload = function(e) {
-              var buf = new Uint8Array(e.target.result); 
-              var ptr = Module['cwrap']('get_content_buffer', 'number', ['number'])(buf.length);
-              for(var i = 0, l = buf.length; i < l; ++i) {
-                HEAP8[ptr+i] = buf[i];
-              }
-              Module['cwrap']('load', null, [])();
-              var page_count = Module['cwrap']('get_page_count', 'number', [])();
-              canvas_list.length = 0;
-              var renderE = document.getElementById('render');
-              renderE.innerHTML='';
-              for(var i = 0; i < page_count; ++i) {
-                var e = document.createElement('canvas');
-                canvas_list.push(e);
-                renderE.appendChild(e);
-              }
-
-              var cur_page = 0;
-              function render_next_page() {
-                if(cur_page == page_count) return;
-
-                try {
-                  var start_time = Date.now();
-                  Module['cwrap']('render_page', null, ['number'])(cur_page);
-                  var end_time = Date.now();
-                  console.log('Page', cur_page+1, end_time - start_time, 'ms');
-                } catch(e) {
-                  console.log('Cannot render page', cur_page, e);
-                }
-                ++cur_page;
-                timer = setTimeout(render_next_page, 1);
-              }
-              clearTimeout(timer);
-              timer = setTimeout(render_next_page, 1);
-            };
-            reader.readAsArrayBuffer(files[0]);
-          });
-            */
         }
       };
     </script>
