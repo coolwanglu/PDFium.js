@@ -422,8 +422,7 @@ limitations under the License.
         },
         _main: function () {
           enlargeMemory = function() {
-            PDFView.error('Input file is too large, try to allocate more memory like this: `?total_memory=' + total_memory * 2 +'`.');
-            abort();
+            throw ('Not enough memory, try to allocate more by adding the following to the URL: `?total_memory=' + total_memory * 2 +'`.');
           };
           function load_script(url, cb) {
             var e = document.createElement('script');
@@ -433,6 +432,8 @@ limitations under the License.
           }
           load_script('pdfium.js.pdf.js', function() {
             load_script('viewer.js', function() {
+              DEFAULT_URL = null;
+              // initialize PDF.js viewer
               webViewerLoad();
             });
           });
