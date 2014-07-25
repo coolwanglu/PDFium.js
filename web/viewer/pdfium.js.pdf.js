@@ -52,6 +52,8 @@ PDFiumJS.createFakeFailedPromise = function() {
   }; 
 };
 
+PDFiumJS.opened_files = [];
+
 PDFiumJS.Doc = function (data) {
   this.file_size = data.length;
   if(!data) {
@@ -59,16 +61,14 @@ PDFiumJS.Doc = function (data) {
     return;
   }
 
-  var l = this.buf_len = data.length;
-  var p = this.buf = _malloc(l);
-  for(var i = 0; i < l; ++i)
-    HEAP8[p+i] = data[i];
-  this.doc = PDFiumJS.C.Doc_new(p, l);
+  var file_id = PDFiumJS.opened_files.length;
+  PDFiumJS.opened_files[file_id] = data;
+
+  this.doc = PDFiumJS.C.Doc_new(file_id, this.file_size);
   this.numPages = PDFiumJS.C.Doc_get_page_count(this.doc);
 };
 PDFiumJS.Doc.prototype = {
   destroy: function () {
-    _free(this.buf);
     PDFiumJS.C.Doc_delete(this.doc);
   },
   getDownloadInfo: function() {
@@ -149,7 +149,7 @@ PDFiumJS.Page.prototype = {
       ctx.putImageData(img, 0, 0);
     } catch(e) {
       return {
-        promise: PDFiumJS.createFakeFailedPromise('Could not render the page'),
+        promise: PDFiumJS.createFakeFailedPromise({ message: e }),
       };
     }
 

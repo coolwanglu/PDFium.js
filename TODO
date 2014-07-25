@@ -1,4 +1,3 @@
 - Support XHR files
-- Read file from ArrayBuffer directly, avoid copying it to HEAP
 - Paint PDF to image directly, avoid allocating
 - Worker, for smooth scrolling

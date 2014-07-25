@@ -21,9 +21,11 @@ struct {
     UNSUPPORT_INFO unsuppored_info;
 } global;
 
+extern "C"
+int PDFiumJS_read_file(void *file_id, unsigned long pos, unsigned char *pBuf, unsigned long size);
+
 struct PDFiumJS_Doc {
-    PDFiumJS_Doc(const char *buf, size_t len) 
-        : loader(buf, len) {
+    PDFiumJS_Doc(void *file_id, size_t len) {
         memset(&platform_callbacks, '\0', sizeof(platform_callbacks));
         platform_callbacks.version = 1;
         platform_callbacks.app_alert = Form_Alert;
@@ -34,8 +36,8 @@ struct PDFiumJS_Doc {
 
         memset(&file_access, '\0', sizeof(file_access));
         file_access.m_FileLen = static_cast<unsigned long>(len);
-        file_access.m_GetBlock = Get_Block;
-        file_access.m_Param = &loader;
+        file_access.m_GetBlock = PDFiumJS_read_file;
+        file_access.m_Param = file_id;
 
         memset(&file_avail, '\0', sizeof(file_avail));
         file_avail.version = 1;
@@ -91,14 +93,6 @@ struct PDFiumJS_Doc {
     }
 
     static
-    int Get_Block(void *param, unsigned long pos, unsigned char *pBuf, unsigned long size) {
-      TestLoader *pLoader = (TestLoader*) param;
-      if (pos + size < pos || pos + size > pLoader->m_Len) return 0;
-      memcpy(pBuf, pLoader->m_pBuf + pos, size);
-      return 1;
-    }
-
-    static
     bool Is_Data_Avail(FX_FILEAVAIL *pThis, size_t offset, size_t size) {
       return true;
     }
@@ -107,13 +101,6 @@ struct PDFiumJS_Doc {
     void Add_Segment(FX_DOWNLOADHINTS *pThis, size_t offset, size_t size) {
     }
 
-    class TestLoader {
-    public:
-        TestLoader(const char *pBuf, size_t len)
-            : m_pBuf(pBuf), m_Len(len) { }
-        const char *m_pBuf;
-        size_t m_Len;
-    } loader;
     IPDF_JSPLATFORM platform_callbacks;
     FPDF_FORMFILLINFO form_callbacks;
     FPDF_FILEACCESS file_access;
@@ -190,8 +177,8 @@ void PDFiumJS_init() {
 }
 
 extern "C"
-PDFiumJS_Doc *PDFiumJS_Doc_new(const char *buf, size_t len) {
-    return new PDFiumJS_Doc(buf, len);
+PDFiumJS_Doc *PDFiumJS_Doc_new(void *file_id, size_t len) {
+    return new PDFiumJS_Doc(file_id, len);
 }
 
 extern "C"
