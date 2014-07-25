@@ -61,21 +61,6 @@
             abort();
           };
 
-          var get_buf = (function() {
-            var buf = 0;
-            var buf_max_len = 0;
-            var buf_len = 0;
-            return function (len) {
-              if(buf_max_len < len) {
-                _free(buf);
-                buf = _malloc(len);
-                buf_max_len = len;
-              }
-              buf_len = len;
-              return buf;
-            };
-          })();
-
 if (typeof PDFiumJS === 'undefined') {
   (typeof window !== 'undefined' ? window : this).PDFiumJS = {};
 }
@@ -97,7 +82,9 @@ PDFiumJS.C = {
 };
           PDFiumJS.C.init();
 
-          var cur_doc = 0;
+          PDFiumJS.opened_files = [];
+          var cur_doc = null;
+          var cur_file_id = 0;
 
           var inputE = document.getElementById('input-pdf');
           inputE.style.display = 'block';
@@ -108,13 +95,13 @@ PDFiumJS.C = {
             var reader = new FileReader();
             reader.onload = function(e) {
               var buf = new Uint8Array(e.target.result); 
-              var ptr = get_buf(buf.length);
-              for(var i = 0, l = buf.length; i < l; ++i) {
-                HEAP8[ptr+i] = buf[i];
-              }
-              if(cur_doc)
+              if(cur_doc) {
                 PDFiumJS.C.Doc_delete(cur_doc);
-              cur_doc = PDFiumJS.C.Doc_new(ptr, buf.length);
+                PDFiumJS.opened_files[cur_file_id] = null;
+              }
+              cur_file_id = PDFiumJS.opened_files.length;
+              PDFiumJS.opened_files[cur_file_id] = buf;
+              cur_doc = PDFiumJS.C.Doc_new(cur_file_id, buf.length);
               var page_count = PDFiumJS.C.Doc_get_page_count(cur_doc);
               canvas_list.length = 0;
               var renderE = document.getElementById('render');
