@@ -64,11 +64,13 @@ PDFiumJS.Doc = function (data) {
   var file_id = PDFiumJS.opened_files.length;
   PDFiumJS.opened_files[file_id] = data;
 
+  this.file_id = file_id;
   this.doc = PDFiumJS.C.Doc_new(file_id, this.file_size);
   this.numPages = PDFiumJS.C.Doc_get_page_count(this.doc);
 };
 PDFiumJS.Doc.prototype = {
   destroy: function () {
+    PDFiumJS.opened_files[file_id] = null;
     PDFiumJS.C.Doc_delete(this.doc);
   },
   getDownloadInfo: function() {
