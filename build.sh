@@ -15,6 +15,7 @@ mkdir web || true
 $EM_DIR/em++ \
     -Oz \
     --llvm-lto 1 \
+    --memory-init-file 1 \
     -s EXPORTED_FUNCTIONS="['_PDFiumJS_init', '_PDFiumJS_Doc_new', '_PDFiumJS_Doc_delete', '_PDFiumJS_Doc_get_page_count', '_PDFiumJS_Doc_get_page', '_PDFiumJS_Page_get_width', '_PDFiumJS_Page_get_height', '_PDFiumJS_Page_get_bitmap', '_PDFiumJS_Bitmap_get_buffer', '_PDFiumJS_Bitmap_get_stride', '_PDFiumJS_Bitmap_destroy', '_PDFiumJS_Page_destroy']" \
     --js-library pdfium.js/pdfium.js.lib.js \
     -o web/pdfium.js \
@@ -22,7 +23,7 @@ $EM_DIR/em++ \
 
 }
 
-do_config
-do_make
+#do_config
+#do_make
 do_link
 
