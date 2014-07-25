@@ -21,6 +21,7 @@ $EM_DIR/em++ \
     -o web/pdfium.js \
     -Wl,--start-group out/Release/obj.target/pdfium_js/pdfium.js/pdfium.js.o out/Release/obj.target/libpdfium.a out/Release/obj.target/libfdrm.a out/Release/obj.target/libfpdfdoc.a out/Release/obj.target/libfpdfapi.a out/Release/obj.target/libfpdftext.a out/Release/obj.target/libformfiller.a out/Release/obj.target/libfxcodec.a out/Release/obj.target/libfxcrt.a out/Release/obj.target/libfxedit.a out/Release/obj.target/libfxge.a out/Release/obj.target/libpdfwindow.a -Wl,--end-group
 
+cp web/pdfium.js.mem web/viewer/
 }
 
 #do_config
